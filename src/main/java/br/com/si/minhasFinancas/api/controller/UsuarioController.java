@@ -5,29 +5,24 @@ import br.com.si.minhasFinancas.exception.AutenticarException;
 import br.com.si.minhasFinancas.exception.CustomException;
 import br.com.si.minhasFinancas.model.entity.Usuario;
 import br.com.si.minhasFinancas.service.UsuarioService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(value = "/usuario")
+@RequestMapping(value = "/api/usuario")
+@RequiredArgsConstructor
 public class UsuarioController {
 
-    private UsuarioService usuarioService;
-
-    public UsuarioController(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
-    }
+    private final UsuarioService usuarioService;
 
     @PostMapping(value = "/autenticar")
     public ResponseEntity autenticar(@RequestBody UsuarioDTO usuarioDTO){
 
         try{
             Usuario usuario = usuarioService.autenticar(usuarioDTO.getEmail(),usuarioDTO.getSenha());
-            return ResponseEntity.ok(usuario);
+            return new ResponseEntity(usuario,HttpStatus.CREATED);
         }catch (AutenticarException e){
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -45,6 +40,17 @@ public class UsuarioController {
 
         try{
             return new ResponseEntity<Usuario>(usuarioService.salvar(usuario), HttpStatus.CREATED);
+        }catch (CustomException e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("{id}/saldo")
+    public ResponseEntity getSaldo(@PathVariable Long id){
+
+        try{
+            return ResponseEntity.ok(usuarioService.getSaldo(id));
         }catch (CustomException e){
             return ResponseEntity.badRequest().body(e.getMessage());
         }

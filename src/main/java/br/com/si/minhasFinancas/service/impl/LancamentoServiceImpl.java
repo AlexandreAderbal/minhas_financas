@@ -2,9 +2,12 @@ package br.com.si.minhasFinancas.service.impl;
 
 import br.com.si.minhasFinancas.exception.CustomException;
 import br.com.si.minhasFinancas.model.entity.Lancamento;
+import br.com.si.minhasFinancas.model.entity.Usuario;
 import br.com.si.minhasFinancas.model.enums.StatusLancamento;
 import br.com.si.minhasFinancas.model.repository.LancamentoRepository;
 import br.com.si.minhasFinancas.service.LancamentoService;
+import br.com.si.minhasFinancas.service.UsuarioService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.stereotype.Service;
@@ -13,15 +16,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class LancamentoServiceImpl implements LancamentoService {
 
-    private LancamentoRepository repository;
-
-    public LancamentoServiceImpl(LancamentoRepository repository) {
-        this.repository = repository;
-    }
+    private final LancamentoRepository repository;
+    private final UsuarioService usuarioService;
 
     @Override
     @Transactional
@@ -35,15 +37,24 @@ public class LancamentoServiceImpl implements LancamentoService {
     @Transactional
     public Lancamento atualizar(Lancamento lancamento) {
         Objects.requireNonNull(lancamento);
+        this.validar(lancamento);
         return repository.save(lancamento);
     }
 
     @Override
     @Transactional
     public void deletar(Lancamento lancamento) {
+
         Objects.requireNonNull(lancamento.getId());
-        this.validar(lancamento);
+
+        if(lancamento != null && lancamento.getId() != null && lancamento.getId() > 0){
+            findById(lancamento.getId()).orElseThrow(
+                    () -> new CustomException("Não foi encontrado um lançamento com o id: " + lancamento.getId() )
+            );
+        }
+
         repository.delete(lancamento);
+
     }
 
     @Override
@@ -58,13 +69,27 @@ public class LancamentoServiceImpl implements LancamentoService {
 
     @Override
     @Transactional
-    public void atualizarStatus(Lancamento lancamento, StatusLancamento statusLancamento) {
+    public Lancamento atualizarStatus(Long idLancamento, StatusLancamento statusLancamento) {
+
+        Lancamento lancamento = findById(idLancamento).orElseThrow(
+            () -> new CustomException("Não foi encontrado um lançamento com o id: " + idLancamento)
+        );
+
         lancamento.setStatusLancamento(statusLancamento);
+
         repository.save(lancamento);
+
+        return lancamento;
     }
 
     @Override
     public void validar(Lancamento lancamento) {
+
+        if(lancamento != null && lancamento.getId() != null && lancamento.getId() > 0){
+            findById(lancamento.getId()).orElseThrow(
+                () -> new CustomException("Não foi encontrado um lançamento com o id: " + lancamento.getId() )
+            );
+        }
 
         if(lancamento.getDescricao() == null || lancamento.getDescricao().trim().equals("")){
             throw new CustomException("Informe uma descrição válida!");
@@ -82,6 +107,12 @@ public class LancamentoServiceImpl implements LancamentoService {
             throw new CustomException("Informe uma usuario!");
         }
 
+        Usuario usuario = usuarioService.findById(lancamento.getUsuario().getId()).orElseThrow(
+            () -> new CustomException("Não foi encontrado o usaurio com o id: " + lancamento.getUsuario().getId())
+        );
+
+        lancamento.setUsuario(usuario);
+
         if(lancamento.getValor() == null || lancamento.getValor().compareTo(BigDecimal.ZERO) < 1){
             throw new CustomException("Informe uma valor válido!");
         }
@@ -89,5 +120,10 @@ public class LancamentoServiceImpl implements LancamentoService {
         if(lancamento.getTipoLancamento() == null){
             throw new CustomException("Informe uma tipo de lancamento!");
         }
+    }
+
+    @Override
+    public Optional<Lancamento> findById(Long id) {
+        return repository.findById(id);
     }
 }
