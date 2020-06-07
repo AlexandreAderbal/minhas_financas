@@ -7,6 +7,8 @@ import br.com.si.minhasFinancas.model.enums.TipoLancamento;
 import br.com.si.minhasFinancas.model.repository.UsuarioRepository;
 import br.com.si.minhasFinancas.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,9 +17,10 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Qualifier("usuarioService")
 public class UsuarioServiceImpl implements UsuarioService {
 
-    private final UsuarioRepository usuarioRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Override
     public Usuario autenticar(String email, String senha) {

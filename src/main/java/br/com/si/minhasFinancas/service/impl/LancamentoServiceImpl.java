@@ -8,6 +8,7 @@ import br.com.si.minhasFinancas.model.repository.LancamentoRepository;
 import br.com.si.minhasFinancas.service.LancamentoService;
 import br.com.si.minhasFinancas.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class LancamentoServiceImpl implements LancamentoService {
     @Override
     @Transactional
     public Lancamento atualizar(Lancamento lancamento) {
-        Objects.requireNonNull(lancamento);
+        Objects.requireNonNull(lancamento.getId());
         this.validar(lancamento);
         return repository.save(lancamento);
     }
